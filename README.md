@@ -69,4 +69,4 @@ Extension sử dụng các API mạnh mẽ nhất của Chrome:
 - **Transparent**: Mã nguồn mở, bạn kiểm soát những gì đang chạy.
 
 ---
-**Phát triển bởi PLD Team**
+**Phát triển bởi laiduc1312209**
