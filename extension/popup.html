@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browser History Manager</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>PLD History Manager</h1>
+      <p class="info-badge">Clean history, clear conscience</p>
+    </header>
+
+    <!-- Toggle Section (prominent, between header and content) -->
+    <div class="toggle-bar">
+      <label class="toggle-switch-large">
+        <input type="checkbox" id="filterToggle">
+        <span class="toggle-slider-large"></span>
+      </label>
+      <span class="toggle-label">URL Filter Protection</span>
+    </div>
+
+    <!-- Current URL Section -->
+    <div class="current-url-section">
+      <div class="current-url-header">
+        <span class="url-icon">🔗</span>
+        <span class="url-label">Current Page</span>
+      </div>
+      <div class="current-url-display">
+        <span id="currentUrl" class="url-text">Loading...</span>
+      </div>
+      <button id="addToLibraryBtn" class="add-to-library-btn">
+        <span>📚</span> Add to Library
+      </button>
+    </div>
+
+    <!-- PIN Setup Section (shown on first use) -->
+    <div id="pinSetupSection" class="pin-setup-section" style="display: none;">
+      <div class="setup-content">
+        <div class="setup-icon">🔒</div>
+        <h2>Setup Security PIN</h2>
+        <p class="setup-subtitle">Create a 4-digit PIN to protect your history</p>
+
+        <div class="setup-form">
+          <label>Enter PIN</label>
+          <div class="pin-inputs-setup">
+            <input type="password" maxlength="1" class="pin-digit-setup" id="setup-pin1" inputmode="numeric">
+            <input type="password" maxlength="1" class="pin-digit-setup" id="setup-pin2" inputmode="numeric">
+            <input type="password" maxlength="1" class="pin-digit-setup" id="setup-pin3" inputmode="numeric">
+            <input type="password" maxlength="1" class="pin-digit-setup" id="setup-pin4" inputmode="numeric">
+          </div>
+
+          <label>Confirm PIN</label>
+          <div class="pin-inputs-setup">
+            <input type="password" maxlength="1" class="pin-digit-setup" id="confirm-pin1" inputmode="numeric">
+            <input type="password" maxlength="1" class="pin-digit-setup" id="confirm-pin2" inputmode="numeric">
+            <input type="password" maxlength="1" class="pin-digit-setup" id="confirm-pin3" inputmode="numeric">
+            <input type="password" maxlength="1" class="pin-digit-setup" id="confirm-pin4" inputmode="numeric">
+          </div>
+
+          <div id="setupError" class="setup-error" style="display: none;"></div>
+          <button id="createPinBtn" class="create-pin-btn">Create PIN</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <button id="viewHistoryBtn" class="view-history-btn-small">
+        <span class="btn-icon-small">🔐</span>
+        <span>View History</span>
+      </button>
+      <button id="toggleSettings" class="settings-btn-small">⚙️ Settings</button>
+    </div>
+
+
+    <div class="settings-section" style="display: none;">
+
+
+      <div id="settingsPanel" class="settings-panel" style="display: none;">
+        <div class="settings-panel-header">
+          <h3>URL Filter Settings</h3>
+          <button id="closeSettings" class="close-settings-btn">×</button>
+        </div>
+
+        <p class="settings-hint">Only delete browser history of URLs containing keywords below</p>
+
+        <div class="setting-row">
+          <label>Keywords:</label>
+          <div class="keyword-input-group">
+            <input type="text" id="keywordInput" placeholder="Enter keyword...">
+            <button id="addKeywordBtn" class="add-btn">+</button>
+          </div>
+          <div id="keywordTags" class="keyword-tags"></div>
+          <small class="hint-text">Deletes: history + form data + suggestions</small>
+        </div>
+
+        <div class="setting-row">
+          <label>Security:</label>
+          <button id="changePinBtn" class="change-pin-btn">Change PIN</button>
+        </div>
+
+
+      </div>
+
+      <!-- PIN Modal -->
+      <div id="pinModal" class="pin-modal" style="display: none;">
+        <div class="pin-modal-content">
+          <h3>Enter PIN</h3>
+          <div class="pin-inputs-modal">
+            <input type="password" maxlength="1" class="pin-digit-modal" id="modal-pin1" inputmode="numeric">
+            <input type="password" maxlength="1" class="pin-digit-modal" id="modal-pin2" inputmode="numeric">
+            <input type="password" maxlength="1" class="pin-digit-modal" id="modal-pin3" inputmode="numeric">
+            <input type="password" maxlength="1" class="pin-digit-modal" id="modal-pin4" inputmode="numeric">
+          </div>
+          <div id="pinError" class="pin-error" style="display: none;">Incorrect PIN</div>
+          <div class="pin-modal-actions">
+            <button id="cancelPin" class="cancel-btn">Cancel</button>
+            <button id="submitPin" class="submit-btn">Open</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Library Modal -->
+      <div id="libraryModal" class="pin-modal" style="display: none;">
+        <div class="pin-modal-content library-modal-content">
+          <h3>Add to Library</h3>
+          <div class="library-form">
+            <div class="form-group">
+              <label>Title</label>
+              <input type="text" id="libTitle" class="lib-input" placeholder="Title...">
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <textarea id="libDesc" class="lib-input lib-textarea" placeholder="Description (optional)..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>URL</label>
+              <input type="text" id="libUrl" class="lib-input disabled" readonly>
+            </div>
+          </div>
+          <div class="pin-modal-actions">
+            <button id="cancelLib" class="cancel-btn">Cancel</button>
+            <button id="saveLib" class="submit-btn">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>
