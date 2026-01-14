@@ -10,7 +10,47 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadSettings();
     setupEventListeners();
     setupPINSetupHandlers(); // Ensure handlers are always active
+    checkForUpdates();
 });
+
+// Check for updates
+async function checkForUpdates() {
+    try {
+        const manifest = chrome.runtime.getManifest();
+        const currentVer = manifest.version;
+
+        // Fetch version.json from GitHub
+        const response = await fetch('https://raw.githubusercontent.com/laiduc1312209/pld-history-manager/main/version.json');
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const remoteVer = data.version;
+
+        if (isNewerVersion(remoteVer, currentVer)) {
+            const banner = document.getElementById('updateBanner');
+            const link = document.getElementById('updateLink');
+            if (banner && link) {
+                link.href = data.download_url;
+                banner.style.display = 'flex';
+            }
+        }
+    } catch (error) {
+        console.log('Update check failed:', error);
+    }
+}
+
+function isNewerVersion(remote, current) {
+    const v1 = remote.split('.').map(Number);
+    const v2 = current.split('.').map(Number);
+
+    for (let i = 0; i < Math.max(v1.length, v2.length); i++) {
+        const num1 = v1[i] || 0;
+        const num2 = v2[i] || 0;
+        if (num1 > num2) return true;
+        if (num1 < num2) return false;
+    }
+    return false;
+}
 
 // Check if PIN is setup
 async function checkPINSetup() {

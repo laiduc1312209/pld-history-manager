@@ -58,6 +58,52 @@ header h1 {
     color: rgba(255, 255, 255, 0.8);
 }
 
+/* ===== UPDATE BANNER ===== */
+.update-banner {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-10px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.update-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.update-link {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    text-decoration: none;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.update-link:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
 /* ===== TOGGLE BAR ===== */
 .toggle-bar {
     display: flex;
