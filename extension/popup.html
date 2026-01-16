@@ -6,19 +6,55 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Browser History Manager</title>
   <link rel="stylesheet" href="popup.css">
+  <script src="languages.js"></script>
 </head>
 
 <body>
   <div class="container">
     <header>
-      <h1>PLD History Manager</h1>
-      <p class="info-badge">Clean history, clear conscience</p>
+      <h1 data-i18n="appName">PLD History Manager</h1>
+      <p class="info-badge" data-i18n="tagline">Clean history, clear conscience</p>
     </header>
+
+    <!-- Language Selection (First Install) -->
+    <div id="languageSelection" class="language-selection" style="display: none;">
+      <div class="language-content">
+        <h2 data-i18n="selectLanguage">Select Language</h2>
+        <p class="language-subtitle" data-i18n="selectLanguageSubtitle">Choose your preferred language</p>
+        <div class="language-options">
+          <button class="language-btn" data-lang="vi">
+            <span class="flag-icon">🇻🇳</span>
+            <span class="lang-name">Tiếng Việt</span>
+          </button>
+          <button class="language-btn" data-lang="en">
+            <span class="flag-icon">🇬🇧</span>
+            <span class="lang-name">English</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PIN Choice (First Install) -->
+    <div id="pinChoice" class="pin-choice-section" style="display: none;">
+      <div class="choice-content">
+        <h2 data-i18n="usePinProtection">Use PIN Protection?</h2>
+        <p class="choice-subtitle" data-i18n="pinChoiceSubtitle">PIN protects your history and settings from
+          unauthorized access</p>
+        <div class="choice-buttons">
+          <button class="choice-btn yes-btn" id="yesUsePinBtn" data-i18n="yesUsePin">
+            Yes, Use PIN
+          </button>
+          <button class="choice-btn no-btn" id="noSkipPinBtn" data-i18n="noSkipPin">
+            No, Skip
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Update Banner -->
     <div id="updateBanner" class="update-banner" style="display: none;">
-      <span class="update-text">🚀 New version available!</span>
-      <a href="#" id="updateLink" class="update-link" target="_blank">Get it</a>
+      <span class="update-text" data-i18n="newVersionAvailable">New version available!</span>
+      <a href="#" id="updateLink" class="update-link" target="_blank" data-i18n="getIt">Get it</a>
     </div>
 
     <!-- Toggle Section (prominent, between header and content) -->
@@ -27,32 +63,32 @@
         <input type="checkbox" id="filterToggle">
         <span class="toggle-slider-large"></span>
       </label>
-      <span class="toggle-label">URL Filter Protection</span>
+      <span class="toggle-label" data-i18n="urlFilterProtection">URL Filter Protection</span>
     </div>
 
     <!-- Current URL Section -->
     <div class="current-url-section">
       <div class="current-url-header">
-        <span class="url-icon">🔗</span>
-        <span class="url-label">Current Page</span>
+        <span class="url-icon"></span>
+        <span class="url-label" data-i18n="currentPage">Current Page</span>
       </div>
       <div class="current-url-display">
-        <span id="currentUrl" class="url-text">Loading...</span>
+        <span id="currentUrl" class="url-text" data-i18n="loading">Loading...</span>
       </div>
-      <button id="addToLibraryBtn" class="add-to-library-btn">
-        <span>📚</span> Add to Library
+      <button id="addToLibraryBtn" class="add-to-library-btn" data-i18n="addToLibrary">
+        Add to Library
       </button>
     </div>
 
     <!-- PIN Setup Section (shown on first use) -->
     <div id="pinSetupSection" class="pin-setup-section" style="display: none;">
       <div class="setup-content">
-        <div class="setup-icon">🔒</div>
-        <h2>Setup Security PIN</h2>
-        <p class="setup-subtitle">Create a 4-digit PIN to protect your history</p>
+        <div class="setup-icon"></div>
+        <h2 data-i18n="setupSecurityPin">Setup Security PIN</h2>
+        <p class="setup-subtitle" data-i18n="createPinSubtitle">Create a 4-digit PIN to protect your history</p>
 
         <div class="setup-form">
-          <label>Enter PIN</label>
+          <label data-i18n="enterPin">Enter PIN</label>
           <div class="pin-inputs-setup">
             <input type="password" maxlength="1" class="pin-digit-setup" id="setup-pin1" inputmode="numeric">
             <input type="password" maxlength="1" class="pin-digit-setup" id="setup-pin2" inputmode="numeric">
@@ -60,7 +96,7 @@
             <input type="password" maxlength="1" class="pin-digit-setup" id="setup-pin4" inputmode="numeric">
           </div>
 
-          <label>Confirm PIN</label>
+          <label data-i18n="confirmPin">Confirm PIN</label>
           <div class="pin-inputs-setup">
             <input type="password" maxlength="1" class="pin-digit-setup" id="confirm-pin1" inputmode="numeric">
             <input type="password" maxlength="1" class="pin-digit-setup" id="confirm-pin2" inputmode="numeric">
@@ -69,17 +105,16 @@
           </div>
 
           <div id="setupError" class="setup-error" style="display: none;"></div>
-          <button id="createPinBtn" class="create-pin-btn">Create PIN</button>
+          <button id="createPinBtn" class="create-pin-btn" data-i18n="createPin">Create PIN</button>
         </div>
       </div>
     </div>
 
     <div class="main-content">
       <button id="viewHistoryBtn" class="view-history-btn-small">
-        <span class="btn-icon-small">🔐</span>
-        <span>View History</span>
+        <span data-i18n="viewHistory">View History</span>
       </button>
-      <button id="toggleSettings" class="settings-btn-small">⚙️ Settings</button>
+      <button id="toggleSettings" class="settings-btn-small" data-i18n="settings">Settings</button>
     </div>
 
 
@@ -88,35 +123,54 @@
 
       <div id="settingsPanel" class="settings-panel" style="display: none;">
         <div class="settings-panel-header">
-          <h3>URL Filter Settings</h3>
+          <h3 data-i18n="urlFilterSettings">URL Filter Settings</h3>
           <button id="closeSettings" class="close-settings-btn">×</button>
         </div>
 
-        <p class="settings-hint">Only delete browser history of URLs containing keywords below</p>
+        <p class="settings-hint" data-i18n="settingsHint">Only delete browser history of URLs containing keywords below
+        </p>
 
         <div class="setting-row">
-          <label>Keywords:</label>
+          <label data-i18n="keywords">Keywords:</label>
           <div class="keyword-input-group">
-            <input type="text" id="keywordInput" placeholder="Enter keyword...">
+            <input type="text" id="keywordInput" data-i18n-placeholder="enterKeyword" placeholder="Enter keyword...">
             <button id="addKeywordBtn" class="add-btn">+</button>
           </div>
           <div id="keywordTags" class="keyword-tags"></div>
-          <small class="hint-text">Deletes: history + form data + suggestions</small>
         </div>
 
         <div class="setting-row">
-          <label>Security:</label>
-          <button id="changePinBtn" class="change-pin-btn">Change PIN</button>
+          <label data-i18n="security">Security:</label>
+          <div class="pin-buttons">
+            <button id="setPinBtn" class="pin-mgmt-btn" data-i18n="setPin" style="display: none;">Set PIN</button>
+            <button id="changePinBtn" class="pin-mgmt-btn" data-i18n="changePin" style="display: none;">Change
+              PIN</button>
+            <button id="removePinBtn" class="pin-mgmt-btn remove-btn" data-i18n="removePin"
+              style="display: none;">Remove PIN</button>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <label data-i18n="language">Language:</label>
+          <div class="language-selector">
+            <button class="lang-option" data-lang="vi">
+              <span class="flag-icon">🇻🇳</span> Tiếng Việt
+            </button>
+            <button class="lang-option" data-lang="en">
+              <span class="flag-icon">🇬🇧</span> English
+            </button>
+          </div>
         </div>
 
         <div class="warning-box">
-          <strong>⚠️ Important Note:</strong>
-          <p>To avoid creating suggestions in address bar:</p>
+          <strong data-i18n="importantNote">Important Note:</strong>
+          <p data-i18n="warningTitle">To avoid creating suggestions in address bar:</p>
           <ul>
-            <li>It's better to search using Google or other search engines instead of the browser's default search bar
+            <li data-i18n="warningText1">It's better to search using Google or other search engines instead of the
+              browser's default search bar
               to avoid saving search suggestions from your history, as extensions may not have the necessary permissions
               to delete them.</li>
-            <li>You should use an incognito browsing extension for best results.</li>
+            <li data-i18n="warningText2">You should use an incognito browsing extension for best results.</li>
           </ul>
         </div>
       </div>
@@ -124,17 +178,17 @@
       <!-- PIN Modal -->
       <div id="pinModal" class="pin-modal" style="display: none;">
         <div class="pin-modal-content">
-          <h3>Enter PIN</h3>
+          <h3 data-i18n="enterPinTitle">Enter PIN</h3>
           <div class="pin-inputs-modal">
             <input type="password" maxlength="1" class="pin-digit-modal" id="modal-pin1" inputmode="numeric">
             <input type="password" maxlength="1" class="pin-digit-modal" id="modal-pin2" inputmode="numeric">
             <input type="password" maxlength="1" class="pin-digit-modal" id="modal-pin3" inputmode="numeric">
             <input type="password" maxlength="1" class="pin-digit-modal" id="modal-pin4" inputmode="numeric">
           </div>
-          <div id="pinError" class="pin-error" style="display: none;">Incorrect PIN</div>
+          <div id="pinError" class="pin-error" style="display: none;" data-i18n="incorrectPin">Incorrect PIN</div>
           <div class="pin-modal-actions">
-            <button id="cancelPin" class="cancel-btn">Cancel</button>
-            <button id="submitPin" class="submit-btn">Open</button>
+            <button id="cancelPin" class="cancel-btn" data-i18n="cancel">Cancel</button>
+            <button id="submitPin" class="submit-btn" data-i18n="open">Open</button>
           </div>
         </div>
       </div>
@@ -142,24 +196,26 @@
       <!-- Library Modal -->
       <div id="libraryModal" class="pin-modal" style="display: none;">
         <div class="pin-modal-content library-modal-content">
-          <h3>Add to Library</h3>
+          <h3 data-i18n="addToLibraryTitle">Add to Library</h3>
           <div class="library-form">
             <div class="form-group">
-              <label>Title</label>
-              <input type="text" id="libTitle" class="lib-input" placeholder="Title...">
+              <label data-i18n="title">Title</label>
+              <input type="text" id="libTitle" class="lib-input" data-i18n-placeholder="titlePlaceholder"
+                placeholder="Title...">
             </div>
             <div class="form-group">
-              <label>Description</label>
-              <textarea id="libDesc" class="lib-input lib-textarea" placeholder="Description (optional)..."></textarea>
+              <label data-i18n="description">Description</label>
+              <textarea id="libDesc" class="lib-input lib-textarea" data-i18n-placeholder="descriptionPlaceholder"
+                placeholder="Description (optional)..."></textarea>
             </div>
             <div class="form-group">
-              <label>URL</label>
+              <label data-i18n="url">URL</label>
               <input type="text" id="libUrl" class="lib-input disabled" readonly>
             </div>
           </div>
           <div class="pin-modal-actions">
-            <button id="cancelLib" class="cancel-btn">Cancel</button>
-            <button id="saveLib" class="submit-btn">Save</button>
+            <button id="cancelLib" class="cancel-btn" data-i18n="cancel">Cancel</button>
+            <button id="saveLib" class="submit-btn" data-i18n="save">Save</button>
           </div>
         </div>
       </div>

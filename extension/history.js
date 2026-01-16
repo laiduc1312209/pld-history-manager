@@ -8,6 +8,10 @@ let allLibrary = [];
 window.addEventListener('DOMContentLoaded', async () => {
     console.log('History Manager Loaded');
 
+    // Initialize language
+    await LanguageManager.init();
+    LanguageManager.applyTranslations();
+
     // Setup UI listeners immediately
     setupEventListeners();
 
@@ -27,6 +31,13 @@ window.addEventListener('DOMContentLoaded', async () => {
 // Check if user has valid session token
 async function checkAuth() {
     try {
+        // Check if PIN is enabled
+        const pinStatus = await chrome.storage.local.get(['pinEnabled']);
+        if (pinStatus.pinEnabled === false) {
+            // PIN is disabled, allow access without session token
+            return true;
+        }
+
         const result = await chrome.storage.local.get(['sessionToken', 'sessionExpiry']);
 
         if (!result.sessionToken || !result.sessionExpiry) {
@@ -236,7 +247,7 @@ async function deleteLibraryItem(id) {
 
 // Clear all history
 async function clearAll() {
-    if (!confirm('Are you sure you want to delete all history?')) {
+    if (!confirm(LanguageManager.t('confirmClearAll'))) {
         return;
     }
 
@@ -323,7 +334,7 @@ function updateStats() {
     const count = allHistory.length;
     const historyCount = document.getElementById('historyCount');
     if (historyCount) {
-        const itemText = count === 1 ? 'item' : 'items';
+        const itemText = LanguageManager.t('items');
         historyCount.textContent = `${count} ${itemText}`;
     }
 }

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>History Manager - Secure</title>
     <link rel="stylesheet" href="history.css">
+    <script src="languages.js"></script>
 </head>
 
 <body>
@@ -14,13 +15,13 @@
             <div class="header-content">
                 <div class="header-left">
                     <div class="logo">
-                        <span class="logo-icon">🔒</span>
-                        <h1>History Manager</h1>
+                        <span class="logo-icon"></span>
+                        <h1 data-i18n="historyManager">History Manager</h1>
                     </div>
                 </div>
                 <div class="header-right">
-                    <button id="lockBtn" class="lock-btn" title="Lock">
-                        <span>🔐</span> Lock
+                    <button id="lockBtn" class="lock-btn" title="Lock" data-i18n="lock">
+                        Lock
                     </button>
                 </div>
             </div>
@@ -28,19 +29,20 @@
 
         <div class="dashboard-body">
             <div class="nav-tabs">
-                <button class="nav-tab active" data-tab="history">History</button>
-                <button class="nav-tab" data-tab="library">Library 📚</button>
+                <button class="nav-tab active" data-tab="history" data-i18n="history">History</button>
+                <button class="nav-tab" data-tab="library" data-i18n="library">Library</button>
             </div>
 
             <!-- HISTORY VIEW -->
             <div id="historyView" class="tab-view active">
                 <div class="search-section">
-                    <input type="text" id="searchInput" placeholder="Search URL or title..." autocomplete="off">
+                    <input type="text" id="searchInput" data-i18n-placeholder="searchPlaceholder"
+                        placeholder="Search URL or title..." autocomplete="off">
                 </div>
 
                 <div class="stats-bar">
-                    <span id="historyCount" class="count">0 items</span>
-                    <button id="clearAllBtn" class="clear-all-btn">Clear All</button>
+                    <span id="historyCount" class="count" data-i18n="items">0 items</span>
+                    <button id="clearAllBtn" class="clear-all-btn" data-i18n="clearAll">Clear All</button>
                 </div>
 
                 <div id="historyList" class="history-grid">
@@ -48,16 +50,17 @@
                 </div>
 
                 <div id="emptyState" class="empty-state" style="display: none;">
-                    <div class="empty-icon">📭</div>
-                    <p>No history yet</p>
-                    <small>Visit a website to start recording</small>
+                    <div class="empty-icon"></div>
+                    <p data-i18n="noHistoryYet">No history yet</p>
+                    <small data-i18n="visitWebsite">Visit a website to start recording</small>
                 </div>
             </div>
 
             <!-- LIBRARY VIEW -->
             <div id="libraryView" class="tab-view" style="display: none;">
                 <div class="search-section">
-                    <input type="text" id="libSearchInput" placeholder="Search library..." autocomplete="off">
+                    <input type="text" id="libSearchInput" data-i18n-placeholder="searchLibrary"
+                        placeholder="Search library..." autocomplete="off">
                 </div>
 
                 <div id="libraryList" class="history-grid">
@@ -65,9 +68,9 @@
                 </div>
 
                 <div id="libEmptyState" class="empty-state" style="display: none;">
-                    <div class="empty-icon">📚</div>
-                    <p>Library is empty</p>
-                    <small>Add pages from the extension popup</small>
+                    <div class="empty-icon"></div>
+                    <p data-i18n="libraryEmpty">Library is empty</p>
+                    <small data-i18n="addFromPopup">Add pages from the extension popup</small>
                 </div>
             </div>
         </div>

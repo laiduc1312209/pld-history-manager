@@ -1,17 +1,162 @@
-// Popup script - with inline PIN setup
+// Popup script - with inline PIN setup and language support
 
 let currentKeywords = [];
 let currentTab = null;
 
 // Load on popup open
 document.addEventListener('DOMContentLoaded', async () => {
+    await initializeLanguage();
     await loadCurrentTab();
     await checkPINSetup();
     await loadSettings();
     setupEventListeners();
     setupPINSetupHandlers(); // Ensure handlers are always active
+    setupPINChoiceHandlers(); // Setup PIN choice event listeners
+    setupLanguageHandlers(); // Add language event listeners
     checkForUpdates();
 });
+
+// Initialize language system
+async function initializeLanguage() {
+    await LanguageManager.init();
+
+    // Check if language has been set
+    const hasLanguage = await LanguageManager.hasLanguageSet();
+
+    if (!hasLanguage) {
+        // Show language selection screen
+        document.getElementById('languageSelection').style.display = 'block';
+        // Hide other content including PIN choice
+        document.getElementById('pinChoice').style.display = 'none';
+        document.getElementById('updateBanner').style.display = 'none';
+        document.querySelector('.toggle-bar').style.display = 'none';
+        document.querySelector('.current-url-section').style.display = 'none';
+        document.getElementById('pinSetupSection').style.display = 'none';
+        document.querySelector('.main-content').style.display = 'none';
+        document.querySelector('.settings-section').style.display = 'none';
+    } else {
+        // Apply translations
+        LanguageManager.applyTranslations();
+        // Hide language selection
+        document.getElementById('languageSelection').style.display = 'none';
+    }
+}
+
+// Setup language selection handlers
+function setupLanguageHandlers() {
+    // Language selection buttons (first install)
+    const languageBtns = document.querySelectorAll('.language-btn');
+    languageBtns.forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const lang = btn.getAttribute('data-lang');
+            await LanguageManager.setLanguage(lang);
+
+            // Hide language selection
+            document.getElementById('languageSelection').style.display = 'none';
+
+            // Apply translations first
+            LanguageManager.applyTranslations();
+
+            // Update active state in settings
+            updateLanguageSelector();
+
+            // Check if PIN choice has been made
+            const result = await chrome.storage.local.get(['pinChoice']);
+            if (result.pinChoice === undefined) {
+                // Show PIN choice screen (don't show other content yet)
+                document.getElementById('pinChoice').style.display = 'block';
+            } else {
+                // PIN choice already made, proceed normally
+                await checkPINSetup();
+            }
+        });
+    });
+
+    // Language selector in settings
+    const langOptions = document.querySelectorAll('.lang-option');
+    langOptions.forEach(option => {
+        option.addEventListener('click', async () => {
+            const lang = option.getAttribute('data-lang');
+            await LanguageManager.setLanguage(lang);
+
+            // Update active state
+            updateLanguageSelector();
+
+            // Re-apply translations
+            LanguageManager.applyTranslations();
+
+            // Update dynamic content text
+            updateDynamicText();
+        });
+    });
+
+    // Initialize language selector state
+    updateLanguageSelector();
+}
+
+// Update language selector active state
+function updateLanguageSelector() {
+    const langOptions = document.querySelectorAll('.lang-option');
+    langOptions.forEach(option => {
+        if (option.getAttribute('data-lang') === LanguageManager.currentLanguage) {
+            option.classList.add('active');
+        } else {
+            option.classList.remove('active');
+        }
+    });
+}
+
+// Update dynamic text after language change
+function updateDynamicText() {
+    // Update URL text if it's still "Loading..."
+    const urlText = document.getElementById('currentUrl').textContent;
+    if (urlText === 'Loading...' || urlText === 'Đang tải...') {
+        document.getElementById('currentUrl').textContent = LanguageManager.t('loading');
+    }
+}
+
+// Setup PIN choice handlers
+function setupPINChoiceHandlers() {
+    const yesBtn = document.getElementById('yesUsePinBtn');
+    const noBtn = document.getElementById('noSkipPinBtn');
+
+    if (yesBtn) {
+        yesBtn.addEventListener('click', async () => {
+            // User chose to use PIN
+            await chrome.storage.local.set({ pinChoice: true, pinEnabled: true });
+            // Show PIN setup
+            await checkPINSetup();
+        });
+    }
+
+    if (noBtn) {
+        noBtn.addEventListener('click', async () => {
+            // User chose not to use PIN
+            await chrome.storage.local.set({ pinChoice: true, pinEnabled: false });
+            // Show main UI
+            await checkPINSetup();
+        });
+    }
+}
+
+// Update PIN buttons visibility based on PIN state
+function updatePinButtons(pinEnabled) {
+    const setPinBtn = document.getElementById('setPinBtn');
+    const changePinBtn = document.getElementById('changePinBtn');
+    const removePinBtn = document.getElementById('removePinBtn');
+
+    if (pinEnabled) {
+        // PIN is enabled, show Change and Remove
+        if (setPinBtn) setPinBtn.style.display = 'none';
+        if (changePinBtn) changePinBtn.style.display = 'block';
+        if (removePinBtn) removePinBtn.style.display = 'block';
+    } else {
+        // PIN is disabled, show Set PIN
+        if (setPinBtn) setPinBtn.style.display = 'block';
+        if (changePinBtn) changePinBtn.style.display = 'none';
+        if (removePinBtn) removePinBtn.style.display = 'none';
+    }
+}
 
 // Check for updates
 async function checkForUpdates() {
@@ -54,21 +199,56 @@ function isNewerVersion(remote, current) {
 
 // Check if PIN is setup
 async function checkPINSetup() {
-    const result = await chrome.storage.local.get(['pinHash']);
+    // First check if language has been selected
+    const hasLanguage = await LanguageManager.hasLanguageSet();
+    if (!hasLanguage) {
+        // Language not selected yet, don't show PIN screens
+        return;
+    }
+
+    const result = await chrome.storage.local.get(['pinHash', 'pinChoice', 'pinEnabled']);
+    const pinChoiceSection = document.getElementById('pinChoice');
     const pinSetupSection = document.getElementById('pinSetupSection');
     const mainContent = document.querySelector('.main-content');
     const settingsSection = document.querySelector('.settings-section');
 
-    if (!result.pinHash) {
-        // Show PIN setup
+    // Check if user has made PIN choice
+    if (result.pinChoice === undefined) {
+        // Show PIN choice screen
+        pinChoiceSection.style.display = 'block';
+        pinSetupSection.style.display = 'none';
+        mainContent.style.display = 'none';
+        settingsSection.style.display = 'none';
+        return;
+    }
+
+    // User has made a choice
+    if (result.pinEnabled === false) {
+        // PIN is disabled, show main UI
+        pinChoiceSection.style.display = 'none';
+        pinSetupSection.style.display = 'none';
+        document.querySelector('.toggle-bar').style.display = 'flex';
+        document.querySelector('.current-url-section').style.display = 'block';
+        mainContent.style.display = 'block';
+        settingsSection.style.display = 'block';
+        updatePinButtons(false);
+    } else if (!result.pinHash) {
+        // PIN enabled but not set up yet
+        pinChoiceSection.style.display = 'none';
         pinSetupSection.style.display = 'block';
+        document.querySelector('.toggle-bar').style.display = 'none';
+        document.querySelector('.current-url-section').style.display = 'none';
         mainContent.style.display = 'none';
         settingsSection.style.display = 'none';
     } else {
-        // Show normal UI
+        // PIN is enabled and set up
+        pinChoiceSection.style.display = 'none';
         pinSetupSection.style.display = 'none';
+        document.querySelector('.toggle-bar').style.display = 'flex';
+        document.querySelector('.current-url-section').style.display = 'block';
         mainContent.style.display = 'block';
         settingsSection.style.display = 'block';
+        updatePinButtons(true);
     }
 }
 
@@ -228,33 +408,67 @@ function setupEventListeners() {
         changePinBtn.addEventListener('click', async () => {
             const verified = await showPINModal('change_pin');
             if (verified) {
-                // Show Setup UI Reuse
-                const settingsPanel = document.getElementById('settingsPanel');
-                const pinSetupSection = document.getElementById('pinSetupSection');
-
-                settingsPanel.style.display = 'none';
-                document.querySelector('.settings-section').style.display = 'none';
-                document.querySelector('.main-content').style.display = 'none';
-
-                pinSetupSection.style.display = 'block';
-
-                // Update UI text
-                const title = pinSetupSection.querySelector('h2');
-                const sub = pinSetupSection.querySelector('.setup-subtitle');
-                const btn = document.getElementById('createPinBtn');
-
-                if (title) title.textContent = 'Change Security PIN';
-                if (sub) sub.textContent = 'Enter your new 4-digit PIN below';
-                if (btn) btn.textContent = 'Update PIN';
-
-                // Reset inputs
-                document.querySelectorAll('.pin-digit-setup').forEach(i => i.value = '');
-                document.getElementById('setupError').style.display = 'none';
-
-                setTimeout(() => document.getElementById('setup-pin1').focus(), 100);
+                showPinSetupForChange();
             }
         });
     }
+
+    // Set PIN button (when PIN is disabled)
+    const setPinBtn = document.getElementById('setPinBtn');
+    if (setPinBtn) {
+        setPinBtn.addEventListener('click', async () => {
+            // Enable PIN and show setup
+            await chrome.storage.local.set({ pinEnabled: true });
+            showPinSetupForChange();
+        });
+    }
+
+    // Remove PIN button
+    const removePinBtn = document.getElementById('removePinBtn');
+    if (removePinBtn) {
+        removePinBtn.addEventListener('click', async () => {
+            const confirmed = confirm(LanguageManager.t('confirmRemovePin'));
+            if (confirmed) {
+                // Remove PIN hash and disable PIN
+                await chrome.storage.local.remove(['pinHash']);
+                await chrome.storage.local.set({ pinEnabled: false });
+
+                // Update UI
+                await checkPINSetup();
+
+                // Close settings panel
+                const settingsPanel = document.getElementById('settingsPanel');
+                settingsPanel.style.display = 'none';
+            }
+        });
+    }
+}
+
+// Show PIN setup for changing/setting PIN
+function showPinSetupForChange() {
+    const settingsPanel = document.getElementById('settingsPanel');
+    const pinSetupSection = document.getElementById('pinSetupSection');
+
+    settingsPanel.style.display = 'none';
+    document.querySelector('.settings-section').style.display = 'none';
+    document.querySelector('.main-content').style.display = 'none';
+
+    pinSetupSection.style.display = 'block';
+
+    // Update UI text
+    const title = pinSetupSection.querySelector('h2');
+    const sub = pinSetupSection.querySelector('.setup-subtitle');
+    const btn = document.getElementById('createPinBtn');
+
+    if (title) title.textContent = LanguageManager.t('setupSecurityPin');
+    if (sub) sub.textContent = LanguageManager.t('createPinSubtitle');
+    if (btn) btn.textContent = LanguageManager.t('createPin');
+
+    // Reset inputs
+    document.querySelectorAll('.pin-digit-setup').forEach(i => i.value = '');
+    document.getElementById('setupError').style.display = 'none';
+
+    setTimeout(() => document.getElementById('setup-pin1').focus(), 100);
 }
 
 // Load current tab info
@@ -351,7 +565,14 @@ function showLibraryModal() {
 }
 
 // Show PIN modal
-function showPINModal(context) {
+async function showPINModal(context) {
+    // Check if PIN is enabled
+    const result = await chrome.storage.local.get(['pinEnabled']);
+    if (result.pinEnabled === false) {
+        // PIN is disabled, allow access without verification
+        return true;
+    }
+
     return new Promise((resolve) => {
         const modal = document.getElementById('pinModal');
         const pinInputs = document.querySelectorAll('.pin-digit-modal');
