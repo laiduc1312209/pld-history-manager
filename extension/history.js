@@ -325,6 +325,44 @@ function setupEventListeners() {
         });
     });
 
+    // Export/Import History
+    const exportHistoryBtn = document.getElementById('exportHistoryBtn');
+    if (exportHistoryBtn) {
+        exportHistoryBtn.addEventListener('click', exportHistoryToCSV);
+    }
+
+    const importHistoryBtn = document.getElementById('importHistoryBtn');
+    const importHistoryFile = document.getElementById('importHistoryFile');
+    if (importHistoryBtn && importHistoryFile) {
+        importHistoryBtn.addEventListener('click', () => importHistoryFile.click());
+        importHistoryFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                importHistoryFromCSV(file);
+                e.target.value = ''; // Reset file input
+            }
+        });
+    }
+
+    // Export/Import Library
+    const exportLibraryBtn = document.getElementById('exportLibraryBtn');
+    if (exportLibraryBtn) {
+        exportLibraryBtn.addEventListener('click', exportLibraryToCSV);
+    }
+
+    const importLibraryBtn = document.getElementById('importLibraryBtn');
+    const importLibraryFile = document.getElementById('importLibraryFile');
+    if (importLibraryBtn && importLibraryFile) {
+        importLibraryBtn.addEventListener('click', () => importLibraryFile.click());
+        importLibraryFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                importLibraryFromCSV(file);
+                e.target.value = ''; // Reset file input
+            }
+        });
+    }
+
     // Delete own history periodically
     setInterval(deleteOwnHistory, 2000);
 }
@@ -364,4 +402,155 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// ============================================================================
+// CSV EXPORT/IMPORT FUNCTIONS
+// ============================================================================
+
+// Convert array to CSV string
+function arrayToCSV(data, headers) {
+    if (!data || data.length === 0) return '';
+
+    const rows = [headers.join(',')];
+
+    data.forEach(item => {
+        const row = headers.map(header => {
+            let value = item[header] || '';
+            // Escape quotes and wrap in quotes if contains comma
+            value = String(value).replace(/"/g, '""');
+            if (value.includes(',') || value.includes('\n') || value.includes('"')) {
+                value = `"${value}"`;
+            }
+            return value;
+        });
+        rows.push(row.join(','));
+    });
+
+    return rows.join('\n');
+}
+
+// Parse CSV string to array
+function parseCSV(text) {
+    const lines = text.split('\n').filter(line => line.trim());
+    if (lines.length < 2) return [];
+
+    const headers = lines[0].split(',').map(h => h.trim());
+    const result = [];
+
+    for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',');
+        if (values.length === headers.length) {
+            const obj = {};
+            headers.forEach((header, index) => {
+                let value = values[index].trim();
+                // Remove surrounding quotes
+                if (value.startsWith('"') && value.endsWith('"')) {
+                    value = value.slice(1, -1).replace(/""/g, '"');
+                }
+                obj[header] = value;
+            });
+            result.push(obj);
+        }
+    }
+
+    return result;
+}
+
+// Download CSV file
+function downloadCSV(content, filename) {
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+}
+
+// Export History to CSV
+function exportHistoryToCSV() {
+    if (allHistory.length === 0) {
+        alert(LanguageManager.t('noHistoryYet'));
+        return;
+    }
+
+    const headers = ['id', 'url', 'title', 'timestamp'];
+    const csvContent = arrayToCSV(allHistory, headers);
+    const date = new Date().toISOString().split('T')[0];
+    downloadCSV(csvContent, `history_${date}.csv`);
+}
+
+// Export Library to CSV
+function exportLibraryToCSV() {
+    if (allLibrary.length === 0) {
+        alert(LanguageManager.t('libraryEmpty'));
+        return;
+    }
+
+    const headers = ['id', 'url', 'title', 'description', 'favicon', 'dateAdded'];
+    const csvContent = arrayToCSV(allLibrary, headers);
+    const date = new Date().toISOString().split('T')[0];
+    downloadCSV(csvContent, `library_${date}.csv`);
+}
+
+// Import History from CSV
+async function importHistoryFromCSV(file) {
+    try {
+        const text = await file.text();
+        const imported = parseCSV(text);
+
+        if (imported.length === 0) {
+            alert(LanguageManager.t('importError'));
+            return;
+        }
+
+        // Merge with existing history (avoid duplicates by URL+timestamp)
+        const existingKeys = new Set(allHistory.map(h => `${h.url}_${h.timestamp}`));
+        const newItems = imported.filter(item => {
+            const key = `${item.url}_${item.timestamp}`;
+            return !existingKeys.has(key);
+        });
+
+        if (newItems.length > 0) {
+            allHistory = [...newItems, ...allHistory];
+            await chrome.storage.local.set({ customHistory: allHistory });
+            displayHistory(allHistory);
+            updateStats();
+            alert(`${LanguageManager.t('importSuccess')} (${newItems.length} items)`);
+        } else {
+            alert(LanguageManager.t('importSuccess') + ' (0 new items)');
+        }
+    } catch (error) {
+        console.error('Import error:', error);
+        alert(LanguageManager.t('importError'));
+    }
+}
+
+// Import Library from CSV
+async function importLibraryFromCSV(file) {
+    try {
+        const text = await file.text();
+        const imported = parseCSV(text);
+
+        if (imported.length === 0) {
+            alert(LanguageManager.t('importError'));
+            return;
+        }
+
+        // Merge with existing library (avoid duplicates by URL)
+        const existingUrls = new Set(allLibrary.map(l => l.url));
+        const newItems = imported.filter(item => !existingUrls.has(item.url));
+
+        if (newItems.length > 0) {
+            allLibrary = [...newItems, ...allLibrary];
+            await chrome.storage.local.set({ savedLibrary: allLibrary });
+            displayLibrary(allLibrary);
+            alert(`${LanguageManager.t('importSuccess')} (${newItems.length} items)`);
+        } else {
+            alert(LanguageManager.t('importSuccess') + ' (0 new items)');
+        }
+    } catch (error) {
+        console.error('Import error:', error);
+        alert(LanguageManager.t('importError'));
+    }
 }

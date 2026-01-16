@@ -42,7 +42,14 @@
 
                 <div class="stats-bar">
                     <span id="historyCount" class="count" data-i18n="items">0 items</span>
-                    <button id="clearAllBtn" class="clear-all-btn" data-i18n="clearAll">Clear All</button>
+                    <div class="action-buttons">
+                        <button id="exportHistoryBtn" class="export-btn" data-i18n="exportHistory">Export
+                            History</button>
+                        <button id="importHistoryBtn" class="import-btn" data-i18n="importHistory">Import
+                            History</button>
+                        <input type="file" id="importHistoryFile" accept=".csv" style="display: none;">
+                        <button id="clearAllBtn" class="clear-all-btn" data-i18n="clearAll">Clear All</button>
+                    </div>
                 </div>
 
                 <div id="historyList" class="history-grid">
@@ -61,6 +68,16 @@
                 <div class="search-section">
                     <input type="text" id="libSearchInput" data-i18n-placeholder="searchLibrary"
                         placeholder="Search library..." autocomplete="off">
+                </div>
+
+                <div class="stats-bar">
+                    <div class="action-buttons">
+                        <button id="exportLibraryBtn" class="export-btn" data-i18n="exportLibrary">Export
+                            Library</button>
+                        <button id="importLibraryBtn" class="import-btn" data-i18n="importLibrary">Import
+                            Library</button>
+                        <input type="file" id="importLibraryFile" accept=".csv" style="display: none;">
+                    </div>
                 </div>
 
                 <div id="libraryList" class="history-grid">

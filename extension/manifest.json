@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "PLD History Manager",
   "version": "1.0.0",
-  "description": "Quản lý lịch sử duyệt web - Tự động xóa và lưu riêng theo từ khóa",
+  "description": "Manage browsing history - Automatically delete and save separately by keyword.",
   "permissions": [
     "tabs",
     "storage",

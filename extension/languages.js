@@ -3,7 +3,7 @@ const translations = {
   vi: {
     // Header
     appName: 'PLD History Manager',
-    tagline: 'Xóa lịch sử, tâm trí thanh thản',
+    tagline: 'Xóa lịch sử, giúp bạn trở nên trong sáng hơn',
 
     // Update Banner
     newVersionAvailable: 'Phiên bản mới đã có!',
@@ -92,6 +92,14 @@ const translations = {
     visit: 'Truy cập',
     confirmDelete: 'Bạn có chắc muốn xóa mục này?',
     confirmClearAll: 'Bạn có chắc muốn xóa toàn bộ lịch sử?',
+
+    // Export/Import
+    exportHistory: 'Xuất lịch sử',
+    exportLibrary: 'Xuất thư viện',
+    importHistory: 'Nhập lịch sử',
+    importLibrary: 'Nhập thư viện',
+    importSuccess: 'Đã nhập thành công!',
+    importError: 'Lỗi khi nhập file. Vui lòng kiểm tra định dạng CSV.',
   },
 
   en: {
@@ -185,6 +193,14 @@ const translations = {
     visit: 'Visit',
     confirmDelete: 'Are you sure you want to delete this item?',
     confirmClearAll: 'Are you sure you want to clear all history?',
+
+    // Export/Import
+    exportHistory: 'Export History',
+    exportLibrary: 'Export Library',
+    importHistory: 'Import History',
+    importLibrary: 'Import Library',
+    importSuccess: 'Import successful!',
+    importError: 'Error importing file. Please check CSV format.',
   }
 };
 
