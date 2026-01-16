@@ -1,0 +1,5 @@
+{
+    "currentVersion": "1.0.0",
+    "downloadUrl": "https://github.com/laiduc1312209/pld-history-manager/releases/download/v1.0.0/phm-v1.0.0.zip",
+    "releaseNotes": "Initial release with multi-language support (Vietnamese & English), optional PIN protection, and advanced filtering by URL and page title"
+}
