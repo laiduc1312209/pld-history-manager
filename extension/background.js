@@ -118,34 +118,151 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     }
 });
 
-// Function to clean a specific tab
-function cleanTabHistory(tabId) {
+// Function to clean a specific tab - AGGRESSIVE DELETION
+async function cleanTabHistory(tabId) {
     if (tabSessionHistory.has(tabId)) {
         const urls = Array.from(tabSessionHistory.get(tabId));
-        console.log(`[PLD] Cleaning Tab ${tabId} (${urls.length} URLs)`);
+        console.log(`[PLD] ⚡ AGGRESSIVE CLEAN Tab ${tabId} (${urls.length} URLs)`);
 
-        urls.forEach(url => {
-            // Delete from browser history
-            chrome.history.deleteUrl({ url: url });
-
-            try {
-                const origin = new URL(url).origin;
-                // Cache can be removed by origin
-                chrome.browsingData.remove({ origins: [origin] }, { cache: true });
-            } catch (e) {
-                console.error('[PLD] Error removing cache:', e);
-            }
-
-            // formData doesn't support origin filtering, remove globally
-            try {
-                chrome.browsingData.remove({}, { formData: true });
-            } catch (e) {
-                console.error('[PLD] Error removing formData:', e);
-            }
-        });
+        // ========================================================================
+        // STRATEGY: Delete URL + All Variations + Time-based Fallback
+        // ========================================================================
+        for (const url of urls) {
+            await deleteUrlCompletely(url);
+        }
 
         tabSessionHistory.delete(tabId);
+        console.log(`[PLD] ✅ Tab ${tabId} cleaned completely`);
     }
+}
+
+// Delete URL with all variations and fallbacks
+async function deleteUrlCompletely(url) {
+    console.log(`[PLD] 🗑️  Deleting: ${url}`);
+
+    // Step 1: Generate all URL variations
+    const variations = generateUrlVariations(url);
+
+    // Step 2: Delete each variation from history
+    for (const variant of variations) {
+        try {
+            await chrome.history.deleteUrl({ url: variant });
+            console.log(`[PLD]   ├─ Deleted: ${variant}`);
+        } catch (e) {
+            // Ignore errors - URL might not exist
+        }
+    }
+
+    // Step 3: TIME-BASED FALLBACK (Nuclear option)
+    // Search history for this URL and delete by time range
+    try {
+        const results = await chrome.history.search({
+            text: url,
+            maxResults: 1000,
+            startTime: 0
+        });
+
+        for (const item of results) {
+            // Check if URL matches (case-insensitive)
+            if (item.url && item.url.toLowerCase().includes(url.toLowerCase())) {
+                try {
+                    await chrome.history.deleteUrl({ url: item.url });
+                    console.log(`[PLD]   ├─ Time-based delete: ${item.url}`);
+                } catch (e) {
+                    // Ignore
+                }
+            }
+        }
+    } catch (e) {
+        console.error('[PLD] Error in time-based deletion:', e);
+    }
+
+    // Step 4: Clear all browsing data for this origin
+    try {
+        const origin = new URL(url).origin;
+
+        // Remove cache, cookies, localStorage, etc.
+        await chrome.browsingData.remove(
+            { origins: [origin] },
+            {
+                cache: true,
+                cacheStorage: true,
+                cookies: true,
+                localStorage: true,
+                serviceWorkers: true
+            }
+        );
+
+        console.log(`[PLD]   └─ Cleared browsing data for: ${origin}`);
+    } catch (e) {
+        console.error('[PLD] Error removing browsing data:', e);
+    }
+
+    // Step 5: Clear form data globally (can't be scoped to origin)
+    try {
+        await chrome.browsingData.remove({}, { formData: true });
+    } catch (e) {
+        // Ignore
+    }
+}
+
+// Generate URL variations (http/https, www/non-www, trailing slash, etc.)
+function generateUrlVariations(url) {
+    const variations = new Set();
+    variations.add(url);
+
+    try {
+        const urlObj = new URL(url);
+        const protocols = ['http:', 'https:'];
+        const hosts = [urlObj.hostname];
+
+        // Add www variations
+        if (urlObj.hostname.startsWith('www.')) {
+            hosts.push(urlObj.hostname.substring(4));
+        } else {
+            hosts.push('www.' + urlObj.hostname);
+        }
+
+        // Generate all combinations
+        protocols.forEach(protocol => {
+            hosts.forEach(host => {
+                const pathWithSlash = urlObj.pathname.endsWith('/')
+                    ? urlObj.pathname
+                    : urlObj.pathname + '/';
+                const pathWithoutSlash = urlObj.pathname.endsWith('/')
+                    ? urlObj.pathname.slice(0, -1)
+                    : urlObj.pathname;
+
+                // With and without trailing slash
+                [pathWithSlash, pathWithoutSlash].forEach(path => {
+                    const variant = `${protocol}//${host}${path}${urlObj.search}${urlObj.hash}`;
+                    variations.add(variant);
+
+                    // Also add without hash
+                    if (urlObj.hash) {
+                        const noHash = `${protocol}//${host}${path}${urlObj.search}`;
+                        variations.add(noHash);
+                    }
+
+                    // Also add without search
+                    if (urlObj.search) {
+                        const noSearch = `${protocol}//${host}${path}${urlObj.hash}`;
+                        variations.add(noSearch);
+                    }
+
+                    // Also add without both
+                    if (urlObj.search || urlObj.hash) {
+                        const clean = `${protocol}//${host}${path}`;
+                        variations.add(clean);
+                    }
+                });
+            });
+        });
+    } catch (e) {
+        console.error('[PLD] Error generating URL variations:', e);
+    }
+
+    return Array.from(variations);
 }
 
 // Function to find closed tabs that we're still tracking
